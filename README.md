@@ -19,8 +19,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: CFC-Servers/gmod-upload@master
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: project
+      - name: Upload to Workshop
+        uses: CFC-Servers/gmod-upload@master
         with:
           id: 2466875474
           changelog: "Deployment via Github to latest changes"
@@ -44,8 +48,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: CFC-Servers/gmod-upload@master
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: project
+      - name: Upload to Workshop
+        uses: CFC-Servers/gmod-upload@master
         with:
           id: 2466875474
           changelog: "Deployment via Github to latest changes"
@@ -68,8 +76,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: CFC-Servers/gmod-upload@master
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: project
+      - name: Upload to Workshop
+        uses: CFC-Servers/gmod-upload@master
         with:
           id: 2466875474
           changelog: "Deployment via Github to latest changes"
