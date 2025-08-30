@@ -86,12 +86,6 @@ runs:
         LIB_PATH=${{ github.action_path }}
         sed -i "s~{{LIB_PATH}}~$LIB_PATH~g" $LIB_PATH/config.lua
         sed -i "s~{{LIB_PATH}}~$LIB_PATH~g" $LIB_PATH/gma.lua
-    
-    - name: Run Lua scripts
-      shell: bash
-      run: |
-        lua ${{ github.action_path }}/config.lua
-        lua ${{ github.action_path }}/gma.lua
 
     - name: Run config builder
       shell: bash
