@@ -73,6 +73,7 @@ runs:
         curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C ~/Steam
 
     - name: Install LuaJIT via Lua-Batteries
+      shell: bash
       run: |
         curl -L https://github.com/lua-batteries/lua-batteries/releases/download/v0.5.15/lua-batteries-v0.5.15-x86_64-unknown-linux-gnu.tar.xz -o lua-batteries.tar.xz
         mkdir -p /opt/lua-batteries
@@ -87,6 +88,7 @@ runs:
         sed -i "s~{{LIB_PATH}}~$LIB_PATH~g" $LIB_PATH/gma.lua
     
     - name: Run Lua scripts
+      shell: bash
       run: |
         lua ${{ github.action_path }}/config.lua
         lua ${{ github.action_path }}/gma.lua
