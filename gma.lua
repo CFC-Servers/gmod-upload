@@ -3,7 +3,69 @@ if libPath ~= "{{LIB" .. "_PATH}}" then
     package.path = package.path .. ";" .. libPath .. "/?.lua"
 end
 
-local safeCall = require("lib/runner")
+-- LuaJIT compatibility layer for string.pack
+local function packBinary(format, ...)
+    local args = {...}
+    local result = ""
+    local argIndex = 1
+
+    -- Simple implementation for the specific formats used in this code
+    -- Format: "< I1 I8 I8 x z z z I4" and "< I4 z I8 I4"
+    local i = 1
+
+    while i <= #format do
+        local char = format:sub(i, i)
+
+        if char == '<' then
+            -- Little endian marker (ignored for simplicity)
+        elseif char == 'I' then
+            i = i + 1
+            local size = tonumber(format:sub(i, i))
+            local value = args[argIndex] or 0
+            argIndex = argIndex + 1
+
+            if size == 1 then
+                result = result .. string.char(value % 256)
+            elseif size == 4 then
+                -- Pack as little-endian 32-bit integer
+                result = result .. string.char(
+                    value % 256,
+                    math.floor(value / 256) % 256,
+                    math.floor(value / 65536) % 256,
+                    math.floor(value / 16777216) % 256
+                )
+            elseif size == 8 then
+                -- Pack as little-endian 64-bit integer
+                local low = value % 4294967296
+                local high = math.floor(value / 4294967296)
+                result = result .. string.char(
+                    low % 256,
+                    math.floor(low / 256) % 256,
+                    math.floor(low / 65536) % 256,
+                    math.floor(low / 16777216) % 256,
+                    high % 256,
+                    math.floor(high / 256) % 256,
+                    math.floor(high / 65536) % 256,
+                    math.floor(high / 16777216) % 256
+                )
+            end
+        elseif char == 'z' then
+            -- Null-terminated string
+            local str = args[argIndex] or ""
+            argIndex = argIndex + 1
+            result = result .. str .. "\0"
+        elseif char == 'x' then
+            -- Padding byte
+            result = result .. "\0"
+        elseif char == ' ' then
+            -- Skip spaces
+        end
+
+        i = i + 1
+    end
+
+    return result
+end
 
 local OUTPUT_FILE = assert(arg[1], "Missing argument #1 (output file)")
 local ADDON_JSON = assert(arg[2], "Missing argument #2 (path to addon.json)")
@@ -35,9 +97,9 @@ end
 ---@return string gma # Packed gma file contents
 local function pack(name, desc, author, files, steamid, timestamp)
 	return "GMAD"
-		.. ("< I1 I8 I8 x z z z I4"):pack(3 --[[version]], steamid or 0, timestamp or os.time(), name, desc, author, 1)
+		.. packBinary("< I1 I8 I8 x z z z I4", 3 --[[version]], steamid or 0, timestamp or os.time(), name, desc, author, 1)
 		.. table.concat(map(files, function(v, k)
-			return ("< I4 z I8 I4"):pack(k, v.path, #v.content, 0 --[[crc]])
+			return packBinary("< I4 z I8 I4", k, v.path, #v.content, 0 --[[crc]])
 		end))
 		.. "\0\0\0\0"
 		.. table.concat(map(files, function(v)
