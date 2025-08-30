@@ -68,20 +68,28 @@ runs:
     - name: Download SteamCMD
       shell: bash
       run: |
-        sudo apt-get update
         sudo apt-get install lib32gcc-s1
         mkdir ~/Steam
         curl -sqL "https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz" | tar zxvf - -C ~/Steam
 
-    - name: Download Lua 5.3
+    - name: Install LuaJIT via Lua-Batteries
+      run: |
+        curl -L https://github.com/lua-batteries/lua-batteries/releases/download/v0.5.15/lua-batteries-v0.5.15-x86_64-unknown-linux-gnu.tar.xz -o lua-batteries.tar.xz
+        mkdir -p /opt/lua-batteries
+        tar -xf lua-batteries.tar.xz -C /opt/lua-batteries
+        echo "/opt/lua-batteries/bin" >> $GITHUB_PATH
+    
+    - name: Configure Lua files
       shell: bash
       run: |
-        sudo apt-get install lua5.3
-
-        # Substitute the placeholder with the full path to the library
         LIB_PATH=${{ github.action_path }}
         sed -i "s~{{LIB_PATH}}~$LIB_PATH~g" $LIB_PATH/config.lua
         sed -i "s~{{LIB_PATH}}~$LIB_PATH~g" $LIB_PATH/gma.lua
+    
+    - name: Run Lua scripts
+      run: |
+        lua ${{ github.action_path }}/config.lua
+        lua ${{ github.action_path }}/gma.lua
 
     - name: Run config builder
       shell: bash
@@ -106,7 +114,7 @@ runs:
         echo Remove Lua: ${{ inputs.remove_lua }}
 
         set +e
-        CONFIG_OUTPUT=$(lua5.3 config.lua \
+        CONFIG_OUTPUT=$(luajit51  config.lua \
             '${{ inputs.title }}' \
             '${{ inputs.type }}' \
             '${{ inputs.tag1 }}' \
@@ -130,7 +138,7 @@ runs:
       shell: bash
       run: |
         cd $GITHUB_WORKSPACE/project
-        lua5.3 ${{ github.action_path }}/gma.lua $GITHUB_WORKSPACE/project/${{ inputs.id }}.gma "$config_file"
+        luajit51  ${{ github.action_path }}/gma.lua $GITHUB_WORKSPACE/project/${{ inputs.id }}.gma "$config_file"
 
     - name: Create .vdf file
       shell: bash
